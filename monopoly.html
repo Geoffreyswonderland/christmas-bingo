@@ -197,10 +197,10 @@ const TILE = {
 };
 // 28 格，從左上角順時針（8×8 外圈）
 const BOARD = [
-  "start","dare","chance","hell","pk","dare","group","chimney",
+  "start","dare","chance","hell","dare","dare","group","chimney",
   "dare","hell","chance","rest","dare","pk",
   "hell","group","dare","slide","chance","hell","dare",
-  "pk","chance","dare","hell","group","rest","dare",
+  "hell","chance","dare","hell","group","rest","dare",
 ];
 const PER = BOARD.length;
 const CHIMNEY_JUMP = 6, SLIDE_BACK = 5;
@@ -240,19 +240,19 @@ const CHANCES = [
   { w: 3, ic: "🛷", t: "雪橇加速", d: "前進 3 格！", run: async (p, dep) => { await walk(p, 3); await landOn(p, dep + 1); } },
   { w: 3, ic: "❄️", t: "踩到結冰路面", d: "後退 3 格", run: async (p, dep) => { await walk(p, -3); await landOn(p, dep + 1); } },
   { w: 2, ic: "💀", t: "地獄直達車", d: "直接前進到下一個地獄格！", run: async (p, dep) => { await moveTo(p, nextOf(p.pos, "hell")); await landOn(p, dep + 1); } },
-  { w: 2, ic: "🎲", t: "再擲一次", d: "好運氣，再擲一次骰子！", run: async () => { extraTurn = true; } },
+  { w: 2, ic: "🎲", t: "再擲一次", d: "好運氣，再擲一次骰子！", run: async p => { grantExtra(p); } },
   { w: 2, ic: "😴", t: "睡魔來襲", d: "下回合休息", run: async p => { p.skip = true; log(`${nm(p)} 下回合休息 😴`); } },
-  { w: 2, ic: "🔀", t: "乾坤大挪移", d: "選一個人跟你交換位置！", run: async p => {
+  { w: 2, ic: "🔀", t: "乾坤大挪移", d: "選一個人跟你交換位置！", run: async (p, dep) => {
       const others = alive().filter(q => q !== p); if (!others.length) return;
       const q = await pickPlayer("跟誰換位置？", `${nm(p)} 要跟誰交換位置？`, others, "🔀", "chance");
-      const a = p.pos; p.pos = q.pos; q.pos = a; placeTokens(); sfx.swap(); log(`${nm(p)} 和 ${nm(q)} 交換位置 🔀`); } },
+      const a = p.pos; p.pos = q.pos; q.pos = a; placeTokens(); sfx.swap(); log(`${nm(p)} 和 ${nm(q)} 交換位置 🔀`); await landOn(p, dep + 1); await landOn(q, dep + 1); } },
   { w: 2, ic: "🎄", t: "回到起點", d: "聖誕老人把你叫回起點…", run: async p => { await moveTo(p, 0, true); } },
   { w: 1, ic: "🛡️", t: "撿到豁免卡", d: "獲得一張豁免卡！", run: async p => { p.items.shield++; log(`${nm(p)} 獲得豁免卡 🛡️`); } },
   { w: 1, ic: "👉", t: "撿到代打卡", d: "獲得一張代打卡！", run: async p => { p.items.proxy++; log(`${nm(p)} 獲得代打卡 👉`); } },
-  { w: 2, ic: "😈", t: "陷害時間", d: "選一個人，讓他後退 3 格！", run: async p => {
+  { w: 2, ic: "😈", t: "陷害時間", d: "選一個人，讓他後退 3 格！", run: async (p, dep) => {
       const others = alive().filter(q => q !== p); if (!others.length) return;
       const q = await pickPlayer("要陷害誰？", `${nm(p)} 要讓誰後退 3 格？`, others, "😈", "chance");
-      await walk(q, -3); log(`${nm(p)} 陷害 ${nm(q)} 後退 3 格 😈`); } },
+      await walk(q, -3); log(`${nm(p)} 陷害 ${nm(q)} 後退 3 格 😈`); await landOn(q, dep + 1); } },
   { w: 2, ic: "🔥", t: "加碼挑戰", d: "再做一個挑戰！", run: async p => { await doDare(p); } },
 ];
 const PKS = [
@@ -260,12 +260,12 @@ const PKS = [
   "🧍 金雞獨立，先倒的輸", "🎨 比誰先畫出一棵聖誕樹（大家投票誰畫得好）", "🎵 誰先接出〈Jingle Bells〉下一句", "☕ 比誰先說出 5 個咖啡產地",
 ];
 const GROUPS = [
-  { ic: "✊", t: "全體猜拳大賽", d: "所有還在場上的人一起猜拳，<b>最後輸的人</b>後退 3 格！", mode: "loser", fx: async q => { await walk(q, -3); } },
+  { ic: "✊", t: "全體猜拳大賽", d: "所有還在場上的人一起猜拳，<b>最後輸的人</b>後退 3 格！", mode: "loser", fx: async q => { await walk(q, -3); await landOn(q, 1); } },
   { ic: "7️⃣", t: "逢七拍手", d: "大家輪流從 1 開始數，遇到 7 的倍數或有 7 要拍手。<b>出錯的人</b>下回合休息！", mode: "loser", fx: async q => { q.skip = true; } },
-  { ic: "🎶", t: "全體大合唱", d: "大家一起唱〈We Wish You a Merry Christmas〉！<br>唱完<b>場上所有人前進 1 格</b>", mode: "all" },
+  { ic: "🎶", t: "全體大合唱", d: "大家一起唱〈We Wish You a Merry Christmas〉！<br>唱完<b>輪到的人前進 2 格</b>", mode: "all" },
   { ic: "🙋", t: "聖誕搶答", d: "", mode: "quiz" },
-  { ic: "🤫", t: "1、2、3 木頭人", d: "主持人喊口令，<b>最後一個停下來（或動了）</b>的人後退 2 格！", mode: "loser", fx: async q => { await walk(q, -2); } },
-  { ic: "👏", t: "默契大考驗", d: "大家同時比出 1～5 根手指，<b>跟別人都不一樣</b>的人前進 2 格！", mode: "winner", fx: async q => { await walk(q, 2); } },
+  { ic: "🤫", t: "1、2、3 木頭人", d: "主持人喊口令，<b>最後一個停下來（或動了）</b>的人後退 2 格！", mode: "loser", fx: async q => { await walk(q, -2); await landOn(q, 1); } },
+  { ic: "👏", t: "默契大考驗", d: "大家同時比出 1～5 根手指，<b>跟別人都不一樣</b>的人前進 2 格！", mode: "winner", fx: async q => { await walk(q, 2); await landOn(q, 1); } },
 ];
 const QUIZ = [
   ["聖誕老人的雪橇傳統上有幾隻麋鹿？", "8 隻（加上紅鼻子魯道夫是 9 隻）"],
@@ -289,6 +289,10 @@ const save = () => { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catc
 let soundOn = true; try { soundOn = localStorage.getItem("xb-sound") !== "0"; } catch (e) {}
 let busy = false, extraTurn = false;
 const alive = () => S.players.filter(p => !p.done);
+function grantExtra(p) {
+  if (p === S.players[S.turn]) extraTurn = true;
+  else { p.items.reroll++; log(`${nm(p)} 不是這回合的人，改拿一張再擲一次卡 🎲`); }
+}
 
 /* ---------- 音效 ---------- */
 let ac = null, master = null;
@@ -433,6 +437,7 @@ async function walk(p, n) {
   if (p.done) return;
   const id = S.players.indexOf(p), dir = n > 0 ? 1 : -1;
   for (let k = 0; k < Math.abs(n); k++) {
+    if (dir < 0 && p.pos === 0) break; // 後退最多退回起點
     const before = p.pos;
     p.pos = (p.pos + dir + PER) % PER;
     if (dir > 0 && p.pos === 0 && before === PER - 1 && p === S.players[S.turn]) passedStart = true;
@@ -483,17 +488,17 @@ async function dareTile(p, dep) {
   if (ok) {
     const r = Math.random();
     if (r < .45) { await modal({ icon: "🎁", title: "挑戰成功！", text: `${nm(p)} 獎勵：<b>前進 2 格</b>` }); await walk(p, 2); await landOn(p, dep + 1); }
-    else if (r < .8) { await modal({ icon: "🎲", title: "挑戰成功！", text: `${nm(p)} 獎勵：<b>再擲一次</b>` }); extraTurn = true; }
+    else if (r < .8) { await modal({ icon: "🎲", title: "挑戰成功！", text: `${nm(p)} 獎勵：<b>再擲一次</b>` }); grantExtra(p); }
     else { const k = Math.random() < .5 ? "shield" : "proxy"; p.items[k]++; await modal({ icon: k === "shield" ? "🛡️" : "👉", title: "挑戰成功！", text: `${nm(p)} 獎勵：獲得一張<b>${k === "shield" ? "豁免卡" : "代打卡"}</b>` }); }
   } else {
-    if (Math.random() < .6) { await modal({ icon: "😵", title: "挑戰失敗", theme: "hell", text: `${nm(p)} 懲罰：<b>後退 3 格</b>` }); await walk(p, -3); }
+    if (Math.random() < .6) { await modal({ icon: "😵", title: "挑戰失敗", theme: "hell", text: `${nm(p)} 懲罰：<b>後退 3 格</b>` }); await walk(p, -3); await landOn(p, dep + 1); }
     else { p.skip = true; await modal({ icon: "⛄", title: "挑戰失敗", theme: "hell", text: `${nm(p)} 懲罰：<b>下回合休息</b>` }); }
   }
 }
 
 /* ---------- 各種格子 ---------- */
 async function landOn(p, dep = 0) {
-  if (p.done || S.phase !== "play") return;
+  if (p.done || S.phase !== "play" || dep > 3) return;
   const type = BOARD[p.pos];
   tiles[p.pos].classList.remove("flash"); void tiles[p.pos].offsetWidth; tiles[p.pos].classList.add("flash");
   await sleep(300);
@@ -505,7 +510,7 @@ async function landOn(p, dep = 0) {
     for (const x of CHANCES) { r -= x.w; if (r < 0) { c = x; break; } }
     await modal({ tag: "機會", icon: c.ic, title: c.t, theme: "chance", who: `${nm(p)} 抽到`, text: c.d, buttons: [{ label: "好！", value: 1, main: true }] });
     log(`${nm(p)} 機會：${c.t}`);
-    if (dep < 2) await c.run(p, dep);
+    await c.run(p, dep);
   }
   else if (type === "pk") {
     sfx.pop();
@@ -516,11 +521,11 @@ async function landOn(p, dep = 0) {
     const l = w === p ? q : p;
     sfx.ok(); log(`${nm(w)} PK 贏了 ${nm(l)} ⚔️`);
     await walk(w, 2); await walk(l, -2);
-    if (w === p) await landOn(p, dep + 1);
+    await landOn(p, dep + 1); await landOn(p === w ? l : w, dep + 1);
   }
   else if (type === "group") await groupGame(p);
   else if (type === "rest") { sfx.pop(); p.skip = true; log(`${nm(p)} 在雪人旁休息 ⛄`); await modal({ icon: "⛄", title: "雪人休息站", text: `${nm(p)} 跟雪人聊太久，<b>下回合休息</b>！` }); }
-  else if (type === "slide") { sfx.slide(); await modal({ icon: "⛷️", title: "滑雪道！", theme: "chance", text: `${nm(p)} 一路滑下去，<b>後退 ${SLIDE_BACK} 格</b>！` }); await walk(p, -SLIDE_BACK); log(`${nm(p)} 滑下滑雪道 ⛷️`); }
+  else if (type === "slide") { sfx.slide(); await modal({ icon: "⛷️", title: "滑雪道！", theme: "chance", text: `${nm(p)} 一路滑下去，<b>後退 ${SLIDE_BACK} 格</b>！` }); await walk(p, -SLIDE_BACK); log(`${nm(p)} 滑下滑雪道 ⛷️`); await landOn(p, dep + 1); }
   else if (type === "chimney") { sfx.swap(); await modal({ icon: "🏠", title: "煙囪捷徑！", text: `${nm(p)} 鑽進煙囪，<b>前進 ${CHIMNEY_JUMP} 格</b>！` }); await walk(p, CHIMNEY_JUMP); log(`${nm(p)} 走煙囪捷徑 🏠`); await landOn(p, dep + 1); }
   renderSide(); save();
 }
@@ -532,13 +537,13 @@ async function groupGame(p) {
     const [q, a] = QUIZ[Math.floor(Math.random() * QUIZ.length)];
     await modal({ tag: "全體遊戲", icon: "🙋", title: "聖誕搶答", theme: "group", text: `${q}<br><span style="font-size:15px;color:rgba(255,255,255,.6)">場上最快答對的人前進 2 格</span>`, buttons: [{ label: "公布答案", value: 1, main: true }] });
     const w = await modal({ icon: "💡", title: "答案", theme: "group", text: `<b>${a}</b><br>誰最快答對？`, buttons: on.map(x => ({ player: x, value: x })).concat([{ label: "沒人答對", value: null }]) });
-    if (w) { log(`${nm(w)} 搶答成功 🙋`); sfx.ok(); await walk(w, 2); }
+    if (w) { log(`${nm(w)} 搶答成功 🙋`); sfx.ok(); await walk(w, 2); await landOn(w, 1); }
     return;
   }
   if (g.mode === "all") {
     await modal({ tag: "全體遊戲", icon: g.ic, title: g.t, theme: "group", text: g.d, buttons: [{ label: "唱完了！", value: 1, main: true }] });
-    sfx.ok(); log("全體大合唱，場上的人前進 1 格 🎶");
-    for (const x of on) await walk(x, 1);
+    sfx.ok(); log(`全體大合唱，${nm(p)} 前進 2 格 🎶`);
+    await walk(p, 2); await landOn(p, 1);
     return;
   }
   const x = await modal({ tag: "全體遊戲", icon: g.ic, title: g.t, theme: "group", text: g.d + `<br><span style="font-size:15px;color:rgba(255,255,255,.6)">玩完點選${g.mode === "loser" ? "輸家" : "贏家"}（只算場上的人）</span>`,
