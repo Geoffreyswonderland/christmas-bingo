@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b1f17">
+<title>我的聖誕賓果卡</title>
+<style>
+  :root{--gold:#f2c86b;--gold2:#b8862f;--red:#c8283a;--cream:#fbf3e2;--muted:rgba(251,243,226,.6)}
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{min-height:100%}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;color:var(--cream);
+    background:radial-gradient(ellipse at 50% 0%,#1d4a36 0%,transparent 60%),linear-gradient(170deg,#0b1f17,#06120d);
+    min-height:100vh;touch-action:manipulation;-webkit-user-select:none;user-select:none;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(20px,env(safe-area-inset-bottom))}
+  .wrap{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+  h1{font-family:"Didot","Bodoni 72","Times New Roman",serif;text-align:center;letter-spacing:.14em;font-size:26px;
+    background:linear-gradient(180deg,#fff2c9,var(--gold) 45%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{text-align:center;color:var(--muted);font-size:13px;letter-spacing:.2em;margin-top:-8px}
+
+  /* 輸入名字 */
+  #join{display:flex;flex-direction:column;gap:14px;margin-top:12vh;text-align:center}
+  #join p{color:var(--muted)}
+  #nameInput{font-size:20px;padding:14px 18px;border-radius:14px;border:1px solid rgba(242,200,107,.4);background:rgba(255,255,255,.06);
+    color:var(--cream);text-align:center;outline:none;-webkit-user-select:text;user-select:text}
+  #nameInput:focus{border-color:var(--gold)}
+  .btn{font-size:18px;font-weight:800;letter-spacing:.2em;padding:14px;border:none;border-radius:999px;color:#3b2405;cursor:pointer;
+    background:linear-gradient(180deg,#fff0bd,var(--gold) 40%,var(--gold2));box-shadow:0 8px 24px rgba(242,200,107,.3),inset 0 -3px 0 rgba(0,0,0,.18)}
+  .btn:active{transform:translateY(2px)}
+
+  /* 卡片 */
+  #game{display:none;flex-direction:column;gap:14px}
+  .who{display:flex;justify-content:space-between;align-items:center;font-size:15px}
+  .who b{color:var(--gold);font-size:18px}
+  .status{text-align:center;font-size:15px;padding:10px;border-radius:12px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);transition:all .3s}
+  .status.one{background:rgba(242,200,107,.12);border-color:rgba(242,200,107,.4);color:#ffe8b0}
+  .status.win{background:var(--red);border-color:#ff7a88;color:#fff;font-weight:700}
+  .card{position:relative;padding:12px;border-radius:22px;background:linear-gradient(180deg,#a21d2f,#6e0f1c);
+    box-shadow:0 0 0 2px rgba(242,200,107,.7),0 18px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.2)}
+  .letters{display:grid;grid-template-columns:repeat(5,1fr);text-align:center;font-family:"Didot","Times New Roman",serif;font-weight:700;
+    font-size:26px;color:var(--gold);margin-bottom:8px;text-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .grid{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+  .c{position:relative;aspect-ratio:1;border-radius:12px;background:var(--cream);color:#2a1a10;display:flex;align-items:center;justify-content:center;
+    font-weight:800;font-size:clamp(20px,7vw,30px);font-family:"Avenir Next","Helvetica Neue",sans-serif;cursor:pointer;
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);transition:transform .1s}
+  .c:active{transform:scale(.93)}
+  .c::before{content:"";position:absolute;inset:10%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7a88,var(--red) 60%,#8a1524);
+    transform:scale(0);opacity:.92;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+  .c span{position:relative;z-index:1;transition:color .2s}
+  .c.on::before{transform:scale(1)}
+  .c.on span{color:#fff}
+  .c.free{background:linear-gradient(180deg,#fff2c9,var(--gold));font-size:12px;letter-spacing:.1em;flex-direction:column;cursor:default}
+  .c.free::before{display:none}
+  .c.free .star{font-size:clamp(20px,7vw,28px);line-height:1}
+  svg.lines{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+  svg.lines line{stroke:#ffe39a;stroke-width:.09;stroke-opacity:.85;stroke-linecap:round;filter:drop-shadow(0 0 .08px #fff);
+    stroke-dasharray:6;stroke-dashoffset:6;animation:drawLine .6s ease-out forwards}
+  @keyframes drawLine{to{stroke-dashoffset:0}}
+  .tip{text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
+  #newBtn{background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--muted);border-radius:999px;padding:10px;font-size:14px;cursor:pointer}
+  #newBtn.armed{background:var(--red);color:#fff;border-color:var(--red)}
+  #winBanner{display:none;text-align:center;font-size:14px;color:#ffe8b0;cursor:pointer;text-decoration:underline}
+
+  /* 過關畫面 */
+  #win{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(4,10,7,.82);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  #win.show{display:flex}
+  .winBox{width:100%;max-width:420px;text-align:center;padding:26px 20px;border-radius:26px;
+    background:linear-gradient(180deg,#b3283a,#6e0f1c);box-shadow:0 0 0 3px var(--gold),0 30px 80px rgba(0,0,0,.6);animation:pop .6s cubic-bezier(.2,1.5,.4,1)}
+  @keyframes pop{from{transform:scale(.5);opacity:0}}
+  .winBox .big{font-family:"Didot","Times New Roman",serif;font-size:58px;font-weight:700;letter-spacing:.06em;
+    background:linear-gradient(180deg,#fff,var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 1.2s ease-in-out infinite alternate}
+  @keyframes shine{to{filter:drop-shadow(0 0 14px rgba(255,220,130,.9))}}
+  .winBox .name{font-size:22px;font-weight:800;margin:4px 0 14px}
+  .stamp{background:rgba(0,0,0,.25);border-radius:16px;padding:14px;margin-bottom:14px}
+  .stamp .lbl{font-size:12px;letter-spacing:.3em;color:var(--muted)}
+  .stamp .time{font-family:"SF Mono",Menlo,monospace;font-size:38px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .stamp .time small{font-size:.5em;color:#ffe8b0}
+  .stamp .date{font-size:13px;color:var(--muted)}
+  .nums{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:8px 0 16px}
+  .nums i{font-style:normal;background:var(--cream);color:#2a1a10;border-radius:999px;padding:3px 9px;font-weight:800;font-size:14px}
+  #confetti{position:fixed;inset:0;pointer-events:none;z-index:60}
+</style>
+</head>
+<body>
+<canvas id="confetti"></canvas>
+<div class="wrap">
+  <h1>CHRISTMAS BINGO</h1>
+  <div class="sub">聖 誕 賓 果 卡</div>
+
+  <section id="join">
+    <p>先留下你的名字吧 🎄</p>
+    <input id="nameInput" maxlength="12" placeholder="你的名字" autocomplete="off">
+    <button class="btn" id="joinBtn">領取賓果卡</button>
+  </section>
+
+  <section id="game">
+    <div class="who"><span>玩家 <b id="who"></b></span><span id="markCount" style="color:var(--muted)"></span></div>
+    <div class="status" id="status">聽號碼，點一下就能圈起來</div>
+    <div class="card">
+      <div class="letters"><span>B</span><span>I</span><span>N</span><span>G</span><span>O</span></div>
+      <div class="grid" id="grid"><svg class="lines" id="lines" viewBox="0 0 5 5" preserveAspectRatio="none"></svg></div>
+    </div>
+    <div id="winBanner"></div>
+    <div class="tip">連成 <b style="color:var(--gold)">兩條線</b> 就過關（橫、直、斜都算）<br>點錯了再點一次就能取消</div>
+    <button id="newBtn">換一張新卡（新的一局）</button>
+  </section>
+</div>
+
+<div id="win">
+  <div class="winBox">
+    <div class="big">BINGO!</div>
+    <div class="name" id="winName"></div>
+    <div class="stamp">
+      <div class="lbl">完成時間</div>
+      <div class="time" id="winTime"></div>
+      <div class="date" id="winDate"></div>
+    </div>
+    <div style="font-size:13px;color:var(--muted)">已圈選的號碼（請給主持人核對）</div>
+    <div class="nums" id="winNums"></div>
+    <button class="btn" id="closeWin" style="width:100%">回到卡片</button>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const KEY = "xb-card-v1";
+const LINES = [];
+for (let r = 0; r < 5; r++) LINES.push([0,1,2,3,4].map(c => r * 5 + c));
+for (let c = 0; c < 5; c++) LINES.push([0,1,2,3,4].map(r => r * 5 + c));
+LINES.push([0,6,12,18,24], [4,8,12,16,20]);
+
+let st = null;
+try { st = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
+
+function newCard() {
+  const pool = Array.from({ length: 99 }, (_, i) => i + 1);
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+  const nums = pool.slice(0, 25); nums[12] = 0; // 中間免費格
+  return { nums, marked: Array.from({ length: 25 }, (_, i) => i === 12), winAt: null };
+}
+
+/* ---------- 音效 ---------- */
+let ac = null;
+function audio() { if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === "suspended") ac.resume(); return ac; }
+function tone(f, t, len, vol, type = "sine") {
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+  o.connect(g); g.connect(ac.destination); o.start(t); o.stop(t + len + .02);
+}
+const sTap = on => { try { audio(); tone(on ? 880 : 440, ac.currentTime, .12, .15, "triangle"); } catch (e) {} };
+const sLine = () => { try { audio(); const t = ac.currentTime; [659, 784, 988].forEach((f, i) => tone(f, t + i * .09, .4, .18)); } catch (e) {} };
+const sWin = () => { try { audio(); const t = ac.currentTime;
+  [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => { tone(f, t + i * .12, .5, .2, "triangle"); tone(f * 2, t + i * .12, .3, .05); }); } catch (e) {} };
+const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+
+/* ---------- 畫面 ---------- */
+const grid = $("#grid"), svg = $("#lines");
+const cells = [];
+function build() {
+  grid.querySelectorAll(".c").forEach(e => e.remove());
+  cells.length = 0;
+  st.nums.forEach((n, i) => {
+    const c = document.createElement("div");
+    c.className = "c";
+    if (i === 12) { c.classList.add("free"); c.innerHTML = `<span class="star">⭐</span><span>FREE</span>`; }
+    else { c.innerHTML = `<span>${n}</span>`; c.addEventListener("click", () => toggle(i)); }
+    grid.insertBefore(c, svg); cells.push(c);
+  });
+  $("#who").textContent = st.name || "玩家";
+  render(false);
+}
+const done = () => LINES.filter(l => l.every(i => st.marked[i]));
+let shownLines = new Set();
+function render(animate) {
+  cells.forEach((c, i) => c.classList.toggle("on", !!st.marked[i]));
+  const ls = done();
+  const keys = new Set(ls.map(l => l.join(",")));
+  // 重畫連線（只有新完成的線有畫線動畫）
+  svg.innerHTML = "";
+  ls.forEach(l => {
+    const a = l[0], b = l[4];
+    const x1 = a % 5 + .5, y1 = Math.floor(a / 5) + .5, x2 = b % 5 + .5, y2 = Math.floor(b / 5) + .5;
+    const ex = (x2 - x1) * .08, ey = (y2 - y1) * .08;
+    const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    ln.setAttribute("x1", x1 - ex); ln.setAttribute("y1", y1 - ey); ln.setAttribute("x2", x2 + ex); ln.setAttribute("y2", y2 + ey);
+    if (!animate || shownLines.has(l.join(","))) ln.style.animation = "none", ln.style.strokeDashoffset = 0;
+    svg.appendChild(ln);
+  });
+  const newLine = animate && [...keys].some(k => !shownLines.has(k));
+  shownLines = keys;
+  const n = ls.length, s = $("#status");
+  s.className = "status";
+  if (st.winAt) { s.classList.add("win"); s.textContent = `🎉 BINGO！已連 ${n} 條線`; }
+  else if (n === 1) { s.classList.add("one"); s.textContent = "✨ 一條線了！再一條就過關"; }
+  else s.textContent = "聽號碼，點一下就能圈起來";
+  $("#markCount").textContent = `已圈 ${st.marked.filter(Boolean).length - 1} 個`;
+  const wb = $("#winBanner");
+  if (st.winAt) { wb.style.display = "block"; wb.textContent = `🏆 已於 ${fmtTime(st.winAt).replace(/<[^>]+>/g, "")} 過關，點這裡再看一次`; }
+  else wb.style.display = "none";
+  return { n, newLine };
+}
+function toggle(i) {
+  st.marked[i] = !st.marked[i];
+  sTap(st.marked[i]); buzz(12);
+  const { n, newLine } = render(true);
+  if (!st.winAt && n >= 2) {
+    st.winAt = Date.now(); save(); render(false);
+    showWin(true);
+  } else {
+    save();
+    if (newLine) { sLine(); buzz([30, 40, 30]); }
+  }
+}
+const pad = (x, l = 2) => String(x).padStart(l, "0");
+function fmtTime(ts) { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}<small>.${pad(d.getMilliseconds(), 3)}</small>`; }
+function showWin(celebrate) {
+  const d = new Date(st.winAt);
+  $("#winName").textContent = st.name || "玩家";
+  $("#winTime").innerHTML = fmtTime(st.winAt);
+  $("#winDate").textContent = `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+  const nums = st.nums.filter((n, i) => st.marked[i] && i !== 12).sort((a, b) => a - b);
+  $("#winNums").innerHTML = nums.map(n => `<i>${n}</i>`).join("");
+  $("#win").classList.add("show");
+  if (celebrate) { sWin(); buzz([80, 60, 80, 60, 200]); confetti(); }
+}
+$("#closeWin").onclick = () => $("#win").classList.remove("show");
+$("#winBanner").onclick = () => showWin(false);
+
+/* ---------- 彩帶 ---------- */
+function confetti() {
+  const cv = $("#confetti"), ctx = cv.getContext("2d");
+  const W = cv.width = innerWidth, H = cv.height = innerHeight;
+  const cols = ["#f2c86b", "#ff5a6a", "#4fd18b", "#ffffff", "#4fa3ff", "#ffd54a"];
+  const ps = Array.from({ length: 160 }, () => ({ x: W / 2, y: H * .35, vx: (Math.random() - .5) * 16, vy: -Math.random() * 16 - 4,
+    s: 5 + Math.random() * 7, r: Math.random() * 6, vr: (Math.random() - .5) * .4, c: cols[Math.floor(Math.random() * cols.length)] }));
+  const t0 = performance.now();
+  (function f(now) {
+    ctx.clearRect(0, 0, W, H);
+    ps.forEach(p => { p.vy += .35; p.vx *= .99; p.x += p.vx; p.y += p.vy; p.r += p.vr;
+      ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.r); ctx.fillStyle = p.c; ctx.fillRect(-p.s / 2, -p.s / 4, p.s, p.s / 2); ctx.restore(); });
+    if (now - t0 < 4000) requestAnimationFrame(f); else ctx.clearRect(0, 0, W, H);
+  })(t0);
+}
+
+/* ---------- 流程 ---------- */
+function startGame() { $("#join").style.display = "none"; $("#game").style.display = "flex"; build(); }
+$("#joinBtn").onclick = () => {
+  audio();
+  const name = $("#nameInput").value.trim().slice(0, 12);
+  st = Object.assign(newCard(), { name });
+  save(); startGame();
+};
+$("#nameInput").addEventListener("keydown", e => { if (e.key === "Enter") $("#joinBtn").click(); });
+let armT = null;
+$("#newBtn").onclick = e => {
+  const b = e.currentTarget;
+  if (!b.classList.contains("armed")) {
+    b.classList.add("armed"); b.textContent = "確定要換新卡嗎？再按一次";
+    clearTimeout(armT); armT = setTimeout(() => { b.classList.remove("armed"); b.textContent = "換一張新卡（新的一局）"; }, 3000);
+    return;
+  }
+  clearTimeout(armT); b.classList.remove("armed"); b.textContent = "換一張新卡（新的一局）";
+  st = Object.assign(newCard(), { name: st.name }); save(); shownLines = new Set(); build();
+};
+if (st && Array.isArray(st.nums) && st.nums.length === 25) startGame();
+else setTimeout(() => $("#nameInput").focus(), 300);
+})();
+</script>
+</body>
+</html>
