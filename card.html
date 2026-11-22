@@ -133,6 +133,8 @@ for (let c = 0; c < 5; c++) LINES.push([0,1,2,3,4].map(r => r * 5 + c));
 LINES.push([0,6,12,18,24], [4,8,12,16,20]);
 
 let st = null;
+// 測試用：網址加上 ?reset 就清掉這支手機的卡片和名字
+if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem(KEY); } catch (e) {} history.replaceState(null, "", location.pathname); }
 try { st = JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) {}
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} };
 

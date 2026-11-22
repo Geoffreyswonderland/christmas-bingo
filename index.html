@@ -190,6 +190,8 @@ const ballBg = n => { const [a,b] = colorOf(n); return `radial-gradient(circle a
 
 /* ---------- 狀態 ---------- */
 let drawn = [];
+// 測試用：網址加上 ?reset 就清空已開出的號碼
+if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem("xb-host-drawn"); } catch (e) {} history.replaceState(null, "", location.pathname); }
 try { drawn = JSON.parse(localStorage.getItem("xb-host-drawn") || "[]").filter(n => n>=1 && n<=N); } catch(e) {}
 const save = () => { try { localStorage.setItem("xb-host-drawn", JSON.stringify(drawn)); } catch(e) {} };
 let soundOn = true, voiceOn = true;
