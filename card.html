@@ -56,6 +56,35 @@
   svg.lines line{stroke:#ffe39a;stroke-width:.09;stroke-opacity:.85;stroke-linecap:round;filter:drop-shadow(0 0 .08px #fff);
     stroke-dasharray:6;stroke-dashoffset:6;animation:drawLine .6s ease-out forwards}
   @keyframes drawLine{to{stroke-dashoffset:0}}
+  /* ---- 動態效果 ---- */
+  .c{overflow:hidden;transform-style:preserve-3d}
+  .c.deal{animation:deal .55s cubic-bezier(.2,1.3,.4,1) both}
+  @keyframes deal{from{transform:rotateY(100deg) scale(.6);opacity:0}}
+  .c.hit{animation:hit .32s cubic-bezier(.3,1.6,.5,1)}
+  @keyframes hit{0%{transform:scale(.86) translateY(2px)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
+  .c.stamp::before{animation:stampIn .42s cubic-bezier(.2,1.4,.4,1) both}
+  @keyframes stampIn{0%{transform:scale(2.4) rotate(-35deg);opacity:0}55%{transform:scale(.86) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:.92}}
+  .c.stamp span{animation:numPop .42s ease-out}
+  @keyframes numPop{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
+  .c.unstamp{animation:unhit .3s ease-out}
+  @keyframes unhit{0%{transform:rotate(0)}25%{transform:rotate(-6deg)}50%{transform:rotate(5deg)}75%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
+  .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.7);pointer-events:none;transform:translate(-50%,-50%) scale(0);
+    animation:ripple .55s ease-out forwards;z-index:2}
+  @keyframes ripple{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
+  .ink{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--red);pointer-events:none;z-index:40}
+  .c.wave{animation:wave .7s cubic-bezier(.3,1.5,.5,1) both}
+  @keyframes wave{0%{transform:scale(1)}40%{transform:scale(1.16) translateY(-6px);box-shadow:0 0 22px 6px rgba(255,220,130,.9)}100%{transform:scale(1)}}
+  .card.shake{animation:shake .45s ease-in-out}
+  @keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px) rotate(-1deg)}40%{transform:translateX(5px) rotate(1deg)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
+  .spark{position:fixed;pointer-events:none;z-index:41;font-size:16px;line-height:1}
+  .status.bump{animation:bump .5s cubic-bezier(.3,1.6,.5,1)}
+  @keyframes bump{0%{transform:scale(.9)}60%{transform:scale(1.05)}100%{transform:scale(1)}}
+  .bulb{position:absolute;width:9px;height:9px;border-radius:50%;transform:translate(-50%,-50%);z-index:3;
+    animation:twinkle 1.6s ease-in-out infinite alternate}
+  @keyframes twinkle{from{opacity:.25;filter:none}to{opacity:1;filter:drop-shadow(0 0 5px currentColor)}}
+  .card.party .bulb{animation-duration:.25s}
+  #snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .wrap{position:relative;z-index:1}
   .tip{text-align:center;color:var(--muted);font-size:12px;line-height:1.6}
   #newBtn{background:transparent;border:1px solid rgba(255,255,255,.2);color:var(--muted);border-radius:999px;padding:10px;font-size:14px;cursor:pointer}
   #newBtn.armed{background:var(--red);color:#fff;border-color:var(--red)}
@@ -84,6 +113,8 @@
 </head>
 <body>
 <canvas id="confetti"></canvas>
+<canvas id="snow"></canvas>
+<label id="hapticLbl" style="position:fixed;left:-9999px;top:0;opacity:0"><input type="checkbox" switch id="hapticSw"></label>
 <div class="wrap">
   <h1>CHRISTMAS BINGO</h1>
   <div class="sub">捌 參 咖 啡 聖 誕 歲 末 趴</div>
@@ -157,24 +188,98 @@ const sTap = on => { try { audio(); tone(on ? 880 : 440, ac.currentTime, .12, .1
 const sLine = () => { try { audio(); const t = ac.currentTime; [659, 784, 988].forEach((f, i) => tone(f, t + i * .09, .4, .18)); } catch (e) {} };
 const sWin = () => { try { audio(); const t = ac.currentTime;
   [523, 659, 784, 1047, 784, 1047, 1319].forEach((f, i) => { tone(f, t + i * .12, .5, .2, "triangle"); tone(f * 2, t + i * .12, .3, .05); }); } catch (e) {} };
-const buzz = p => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+/* 震動：Android 用 Vibration API；iPhone（iOS 18+ Safari）用隱藏開關觸發系統觸覺回饋 */
+const canVibrate = typeof navigator.vibrate === "function";
+const hapticLbl = $("#hapticLbl");
+function tick() { try { hapticLbl.click(); } catch (e) {} }
+const buzz = p => {
+  try {
+    if (canVibrate) { navigator.vibrate(p); return; }
+    const pat = Array.isArray(p) ? p : [p];
+    let t = 0;
+    for (let k = 0; k < pat.length; k += 2) { if (t === 0) tick(); else setTimeout(tick, t); t += (pat[k] || 0) + (pat[k + 1] || 0); }
+  } catch (e) {}
+};
 
 /* ---------- 畫面 ---------- */
 const grid = $("#grid"), svg = $("#lines");
 const cells = [];
-function build() {
+function build(deal) {
   grid.querySelectorAll(".c").forEach(e => e.remove());
   cells.length = 0;
   st.nums.forEach((n, i) => {
     const c = document.createElement("div");
     c.className = "c";
     if (i === 12) { c.classList.add("free"); c.innerHTML = `<span class="star">⭐</span><span>FREE</span>`; }
-    else { c.innerHTML = `<span>${n}</span>`; c.addEventListener("click", () => toggle(i)); }
+    else { c.innerHTML = `<span>${n}</span>`; c.addEventListener("pointerdown", e => ripple(c, e)); c.addEventListener("click", () => toggle(i)); }
+    if (deal) { c.classList.add("deal"); c.style.animationDelay = (Math.floor(i / 5) + i % 5) * 45 + "ms"; c.addEventListener("animationend", () => { c.classList.remove("deal"); c.style.animationDelay = ""; }, { once: true }); }
     grid.insertBefore(c, svg); cells.push(c);
   });
   $("#who").textContent = st.name || "玩家";
   render(false);
 }
+function replay(el, cls) { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); el.addEventListener("animationend", () => el.classList.remove(cls), { once: true }); }
+function ripple(c, e) {
+  const r = c.getBoundingClientRect(), d = Math.max(r.width, r.height) * 2.2;
+  const s = document.createElement("span"); s.className = "ripple";
+  Object.assign(s.style, { width: d + "px", height: d + "px", left: (e.clientX - r.left) + "px", top: (e.clientY - r.top) + "px" });
+  c.appendChild(s); setTimeout(() => s.remove(), 600);
+}
+function inkSplash(c) {
+  const r = c.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+  for (let k = 0; k < 8; k++) {
+    const p = document.createElement("div"); p.className = "ink";
+    p.style.left = x + "px"; p.style.top = y + "px";
+    document.body.appendChild(p);
+    const a = Math.random() * Math.PI * 2, dist = r.width * (.45 + Math.random() * .4), s = .4 + Math.random() * .8;
+    p.animate([{ transform: `translate(-50%,-50%) scale(${s})`, opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * dist}px), calc(-50% + ${Math.sin(a) * dist}px)) scale(0)`, opacity: 0 }],
+      { duration: 420 + Math.random() * 200, easing: "cubic-bezier(.1,.8,.3,1)", fill: "forwards" }).finished.then(() => p.remove());
+  }
+}
+function celebrateLine(line) {
+  line.forEach((idx, k) => {
+    const c = cells[idx];
+    setTimeout(() => { replay(c, "wave"); sparkAt(c); }, k * 90);
+  });
+  replay($(".card"), "shake");
+  const card = $(".card"); card.classList.add("party"); setTimeout(() => card.classList.remove("party"), 1600);
+}
+function sparkAt(c) {
+  const r = c.getBoundingClientRect();
+  ["✨", "⭐", "❄️"].forEach((ch, k) => {
+    const s = document.createElement("div"); s.className = "spark"; s.textContent = ch;
+    s.style.left = r.left + r.width / 2 + "px"; s.style.top = r.top + r.height / 2 + "px";
+    document.body.appendChild(s);
+    const a = -Math.PI / 2 + (k - 1) * .9 + (Math.random() - .5) * .4, d = 40 + Math.random() * 30;
+    s.animate([{ transform: "translate(-50%,-50%) scale(.3)", opacity: 1 }, { transform: `translate(calc(-50% + ${Math.cos(a) * d}px), calc(-50% + ${Math.sin(a) * d}px)) scale(1.2) rotate(${Math.random() * 180}deg)`, opacity: 0 }],
+      { duration: 800, easing: "ease-out", fill: "forwards" }).finished.then(() => s.remove());
+  });
+}
+/* 卡片周圍的聖誕燈泡 */
+function addBulbs() {
+  const card = $(".card"); card.querySelectorAll(".bulb").forEach(b => b.remove());
+  const cols = ["#ff5a6a", "#ffd54a", "#4fd18b", "#4fa3ff", "#ffffff"];
+  const per = 9; let k = 0;
+  const place = (x, y) => { const b = document.createElement("div"); b.className = "bulb"; const col = cols[k % cols.length];
+    b.style.cssText += `left:${x}%;top:${y}%;background:${col};color:${col};animation-delay:${(k % 4) * .4}s`; card.appendChild(b); k++; };
+  for (let i = 0; i < per; i++) place(4 + 92 * i / (per - 1), 0);
+  for (let i = 1; i < per; i++) place(100, 3 + 94 * i / (per - 1));
+  for (let i = per - 2; i >= 0; i--) place(4 + 92 * i / (per - 1), 100);
+  for (let i = per - 2; i >= 1; i--) place(0, 3 + 94 * i / (per - 1));
+}
+/* 背景飄雪 */
+(function snow() {
+  const cv = $("#snow"), ctx = cv.getContext("2d");
+  const fl = Array.from({ length: 40 }, () => ({ x: Math.random(), y: Math.random(), r: .6 + Math.random() * 1.8, s: .0006 + Math.random() * .0012, w: Math.random() * 6 }));
+  (function f(t) {
+    const w = innerWidth, h = innerHeight, dpr = Math.min(2, devicePixelRatio || 1);
+    if (cv.width !== w * dpr) { cv.width = w * dpr; cv.height = h * dpr; }
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h); ctx.fillStyle = "rgba(255,255,255,.5)";
+    fl.forEach(p => { p.y += p.s; if (p.y > 1.02) { p.y = -.02; p.x = Math.random(); }
+      ctx.beginPath(); ctx.arc((p.x + Math.sin(t / 1800 + p.w) * .015) * w, p.y * h, p.r, 0, Math.PI * 2); ctx.fill(); });
+    requestAnimationFrame(f);
+  })(0);
+})();
 const done = () => LINES.filter(l => l.every(i => st.marked[i]));
 let shownLines = new Set();
 function render(animate) {
@@ -192,29 +297,37 @@ function render(animate) {
     if (!animate || shownLines.has(l.join(","))) ln.style.animation = "none", ln.style.strokeDashoffset = 0;
     svg.appendChild(ln);
   });
-  const newLine = animate && [...keys].some(k => !shownLines.has(k));
+  const newLines = animate ? ls.filter(l => !shownLines.has(l.join(","))) : [];
+  const newLine = newLines.length > 0;
   shownLines = keys;
   const n = ls.length, s = $("#status");
+  const prevCls = s.className;
   s.className = "status";
   if (st.winAt) { s.classList.add("win"); s.textContent = `🎉 BINGO！已連 ${n} 條線`; }
   else if (n === 1) { s.classList.add("one"); s.textContent = "✨ 一條線了！再一條就過關"; }
   else s.textContent = "聽號碼，點一下就能圈起來";
+  if (animate && s.className !== prevCls.replace(/\s*bump/, "")) replay(s, "bump");
   $("#markCount").textContent = `已圈 ${st.marked.filter(Boolean).length - 1} 個`;
   const wb = $("#winBanner");
   if (st.winAt) { wb.style.display = "block"; wb.textContent = `🏆 已於 ${fmtTime(st.winAt).replace(/<[^>]+>/g, "")} 過關，點這裡再看一次`; }
   else wb.style.display = "none";
-  return { n, newLine };
+  return { n, newLine, newLines };
 }
 function toggle(i) {
   st.marked[i] = !st.marked[i];
-  sTap(st.marked[i]); buzz(12);
-  const { n, newLine } = render(true);
+  const c = cells[i], on = st.marked[i];
+  sTap(on);
+  if (on) { replay(c, "hit"); replay(c, "stamp"); inkSplash(c); buzz(18); }
+  else { c.classList.remove("stamp"); replay(c, "unstamp"); buzz([8, 60, 8]); }
+  const { n, newLine, newLines } = render(true);
+  newLines.forEach((l, k) => setTimeout(() => celebrateLine(l), 250 + k * 300));
   if (!st.winAt && n >= 2) {
     st.winAt = Date.now(); save(); render(false);
-    showWin(true);
+    buzz([18, 230, 80, 60, 80, 60, 200]);
+    setTimeout(() => showWin(true), newLine ? 900 : 0);
   } else {
     save();
-    if (newLine) { sLine(); buzz([30, 40, 30]); }
+    if (newLine) { setTimeout(sLine, 250); buzz([18, 230, 40, 60, 40, 60, 60]); }
   }
 }
 const pad = (x, l = 2) => String(x).padStart(l, "0");
@@ -227,7 +340,7 @@ function showWin(celebrate) {
   const nums = st.nums.filter((n, i) => st.marked[i] && i !== 12).sort((a, b) => a - b);
   $("#winNums").innerHTML = nums.map(n => `<i>${n}</i>`).join("");
   $("#win").classList.add("show");
-  if (celebrate) { sWin(); buzz([80, 60, 80, 60, 200]); confetti(); }
+  if (celebrate) { sWin(); confetti(); }
 }
 $("#closeWin").onclick = () => $("#win").classList.remove("show");
 $("#winBanner").onclick = () => showWin(false);
@@ -249,12 +362,12 @@ function confetti() {
 }
 
 /* ---------- 流程 ---------- */
-function startGame() { $("#join").style.display = "none"; $("#game").style.display = "flex"; build(); }
+function startGame(deal) { $("#join").style.display = "none"; $("#game").style.display = "flex"; build(deal); addBulbs(); }
 $("#joinBtn").onclick = () => {
   audio();
   const name = $("#nameInput").value.trim().slice(0, 12);
   st = Object.assign(newCard(), { name });
-  save(); startGame();
+  save(); startGame(true);
 };
 $("#nameInput").addEventListener("keydown", e => { if (e.key === "Enter") $("#joinBtn").click(); });
 let armT = null;
@@ -266,7 +379,7 @@ $("#newBtn").onclick = e => {
     return;
   }
   clearTimeout(armT); b.classList.remove("armed"); b.textContent = "換一張新卡（新的一局）";
-  st = Object.assign(newCard(), { name: st.name }); save(); shownLines = new Set(); build();
+  st = Object.assign(newCard(), { name: st.name }); save(); shownLines = new Set(); build(true); buzz([10, 40, 10, 40, 10]);
 };
 if (st && Array.isArray(st.nums) && st.nums.length === 25) startGame();
 else setTimeout(() => $("#nameInput").focus(), 300);
