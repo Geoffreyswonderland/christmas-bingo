@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>捌參咖啡聖誕歲末趴 · 聖誕大富翁</title>
+<style>
+  :root{--gold:#f2c86b;--gold2:#b8862f;--red:#c8283a;--green:#1f7a4d;--cream:#fbf3e2;--muted:rgba(251,243,226,.55)}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow:hidden}
+  body{font-family:-apple-system,BlinkMacSystemFont,"PingFang TC","Noto Sans TC",sans-serif;color:var(--cream);
+    background:radial-gradient(ellipse at 30% 30%,#17402e 0%,transparent 60%),radial-gradient(ellipse at 85% 15%,#3a0f16 0%,transparent 55%),linear-gradient(160deg,#0b1f17,#06120d)}
+  #snow{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .serif{font-family:"Didot","Bodoni 72","Times New Roman",serif}
+  .goldText{background:linear-gradient(180deg,#fff2c9,var(--gold) 45%,var(--gold2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  button{font-family:inherit}
+  .btn{font-size:18px;font-weight:800;letter-spacing:.15em;padding:.7em 1.8em;border:none;border-radius:999px;cursor:pointer;color:#3b2405;
+    background:linear-gradient(180deg,#fff0bd 0%,var(--gold) 40%,var(--gold2) 100%);
+    box-shadow:0 8px 24px rgba(242,200,107,.3),inset 0 -3px 0 rgba(0,0,0,.18),inset 0 2px 0 rgba(255,255,255,.7);transition:transform .1s,filter .2s}
+  .btn:hover{filter:brightness(1.06)}.btn:active{transform:translateY(2px)}
+  .btn:disabled{filter:grayscale(.6) brightness(.7);cursor:default}
+  .ghost{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:var(--cream);border-radius:999px;padding:.55em 1.2em;font-size:14px;cursor:pointer}
+  .ghost:hover{background:rgba(255,255,255,.14)}
+
+  /* ---------- 版面 ---------- */
+  .app{position:relative;z-index:1;display:flex;height:100vh;padding:2.2vh 2vw;gap:2vw;align-items:center;justify-content:center}
+  .boardWrap{position:relative;height:min(95.6vh,68vw);aspect-ratio:1;flex:none}
+  .board{position:absolute;inset:0;display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(6,1fr);gap:5px;
+    padding:8px;border-radius:24px;background:linear-gradient(180deg,#6e0f1c,#4a0a13);box-shadow:0 0 0 3px rgba(242,200,107,.75),0 30px 70px rgba(0,0,0,.5)}
+  .tile{position:relative;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;
+    background:var(--cream);color:#2a1a10;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);overflow:hidden;transition:box-shadow .3s,transform .3s}
+  .tile .ic{font-size:clamp(18px,2.6vh,34px);line-height:1}
+  .tile .nm{font-size:clamp(10px,1.45vh,16px);font-weight:800;letter-spacing:.05em}
+  .tile .no{position:absolute;top:4px;left:7px;font-size:10px;opacity:.35;font-weight:700}
+  .tile.heaven{background:linear-gradient(180deg,#fffbe9,#ffe7a3)}
+  .tile.hell{background:linear-gradient(180deg,#3b1620,#1d0a10);color:#ffb3bd}
+  .tile.give{background:linear-gradient(180deg,#ffe0e4,#ffb7c0)}
+  .tile.swap{background:linear-gradient(180deg,#dff1ff,#b3dcff)}
+  .tile.chance{background:linear-gradient(180deg,#efe3ff,#d3b9ff)}
+  .tile.rest{background:linear-gradient(180deg,#e3f7ea,#b5e6c6)}
+  .tile.start{background:linear-gradient(180deg,#fff2c9,var(--gold))}
+  .tile.flash{animation:flash .9s ease-in-out 2}
+  @keyframes flash{50%{box-shadow:0 0 0 4px #fff,0 0 30px 10px rgba(255,230,150,.9);transform:scale(1.04)}}
+  .center{grid-column:2/6;grid-row:2/6;border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6vh;padding:2vh;
+    background:radial-gradient(circle at 50% 35%,rgba(255,255,255,.08),transparent 70%),rgba(0,0,0,.2);border:1px solid rgba(242,200,107,.25);text-align:center}
+  .center h1{font-size:clamp(20px,3.4vh,40px);letter-spacing:.1em}
+  .center .sub{color:var(--muted);letter-spacing:.3em;font-size:clamp(10px,1.4vh,14px);margin-top:-1vh}
+  .turnChip{display:flex;align-items:center;gap:10px;font-size:clamp(16px,2.4vh,26px);font-weight:800}
+  .turnChip .dot{width:1.3em;height:1.3em;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7em;color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.7)}
+  .round{color:var(--muted);font-size:13px;letter-spacing:.15em}
+  /* 骰子 */
+  .diceArea{perspective:600px;height:clamp(70px,11vh,120px);display:flex;align-items:center;justify-content:center}
+  .die{width:clamp(60px,9vh,100px);height:clamp(60px,9vh,100px);position:relative;transform-style:preserve-3d;transition:transform 1s cubic-bezier(.2,.8,.3,1)}
+  .face{position:absolute;inset:0;border-radius:18%;background:linear-gradient(145deg,#fff,#efe6d2);box-shadow:inset 0 0 12px rgba(0,0,0,.18);
+    display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);padding:14%}
+  .pip{width:72%;height:72%;margin:auto;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7a88,var(--red) 60%,#7a1020)}
+  .f1{transform:translateZ(calc(clamp(60px,9vh,100px)/2))}
+  .f6{transform:rotateY(180deg) translateZ(calc(clamp(60px,9vh,100px)/2))}
+  .f2{transform:rotateY(90deg) translateZ(calc(clamp(60px,9vh,100px)/2))}
+  .f5{transform:rotateY(-90deg) translateZ(calc(clamp(60px,9vh,100px)/2))}
+  .f3{transform:rotateX(90deg) translateZ(calc(clamp(60px,9vh,100px)/2))}
+  .f4{transform:rotateX(-90deg) translateZ(calc(clamp(60px,9vh,100px)/2))}
+  .piles{display:flex;gap:2vw;font-size:clamp(13px,1.8vh,18px)}
+  .piles b{font-size:1.5em;color:var(--gold)}
+  .log{font-size:clamp(11px,1.5vh,14px);color:var(--muted);line-height:1.6;min-height:4.8em;max-width:90%}
+  .log div:first-child{color:var(--cream)}
+  /* 棋子 */
+  .token{position:absolute;left:0;top:0;width:var(--ts);height:var(--ts);border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:calc(var(--ts)*.48);font-weight:900;color:#fff;z-index:5;box-shadow:0 0 0 2px #fff,0 4px 10px rgba(0,0,0,.45);
+    transition:transform .22s cubic-bezier(.3,1.4,.5,1);text-shadow:0 1px 2px rgba(0,0,0,.4)}
+  .token.active{z-index:6;box-shadow:0 0 0 3px #fff,0 0 0 6px var(--gold),0 6px 16px rgba(0,0,0,.5)}
+  .token.hop{animation:hop .22s ease-out}
+  @keyframes hop{50%{margin-top:calc(var(--ts)*-.6)}}
+
+  /* 右側玩家欄 */
+  .side{width:min(30vw,420px);height:min(95.6vh,100%);display:flex;flex-direction:column;gap:1vh;min-width:0}
+  .sideHead{display:flex;justify-content:space-between;align-items:center}
+  .sideHead h2{font-size:15px;letter-spacing:.3em;color:var(--muted);font-weight:600}
+  .players{flex:1;min-height:0;display:flex;flex-direction:column;gap:.8vh;overflow:auto}
+  .pl{display:flex;align-items:center;gap:10px;padding:.9vh 12px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);transition:all .3s}
+  .pl.active{background:rgba(242,200,107,.15);border-color:rgba(242,200,107,.6);transform:translateX(-6px)}
+  .pl .rk{font-size:11px;color:var(--muted);width:2.2em;text-align:center}
+  .pl .dot{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:900;color:#fff;font-size:14px}
+  .pl .nm{flex:1;min-width:0;font-weight:700;font-size:clamp(13px,1.8vh,17px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pl .nm small{display:block;font-weight:400;font-size:11px;color:var(--muted)}
+  .pl .gifts{display:flex;gap:6px;font-size:clamp(15px,2vh,20px)}
+  .pl .gifts span{opacity:.18;filter:grayscale(1);transition:all .4s}
+  .pl .gifts span.got{opacity:1;filter:none;transform:scale(1.1)}
+  .pl .items{font-size:13px;min-width:2.5em;text-align:right}
+  .sideFoot{display:flex;gap:8px;flex-wrap:wrap}
+  #rollBtn{width:100%;font-size:22px;padding:.8em}
+  #rollBtn .k{font-size:10px;opacity:.55;margin-left:.8em;letter-spacing:.1em}
+  #swapUse{display:none}
+
+  /* 事件視窗 */
+  #modal{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(3,8,6,.6);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+  #modal.show{display:flex}
+  .mbox{width:min(560px,90vw);text-align:center;padding:30px 28px 26px;border-radius:28px;background:linear-gradient(180deg,#123526,#0b2118);
+    box-shadow:0 0 0 3px var(--gold),0 40px 100px rgba(0,0,0,.7);animation:pop .5s cubic-bezier(.2,1.5,.4,1)}
+  .mbox.hellBox{background:linear-gradient(180deg,#3b1620,#1a080d)}
+  .mbox.heavenBox{background:linear-gradient(180deg,#5b4512,#2b1f06)}
+  @keyframes pop{from{transform:scale(.5) rotate(-4deg);opacity:0}}
+  .mbox .mi{font-size:86px;line-height:1.1;animation:wob 1.6s ease-in-out infinite}
+  @keyframes wob{50%{transform:rotate(-6deg) scale(1.06)}}
+  .mbox h3{font-size:34px;margin:8px 0 10px;letter-spacing:.08em}
+  .mbox p{font-size:19px;line-height:1.6;color:#f3e6cc}
+  .mbox p b{color:var(--gold)}
+  .mbtns{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:22px}
+  .pick{display:flex;align-items:center;gap:8px;padding:.55em 1em;border-radius:999px;border:2px solid transparent;cursor:pointer;color:#fff;font-weight:800;font-size:17px}
+  .pick:hover{border-color:#fff;transform:translateY(-2px)}
+  .mhint{margin-top:12px;font-size:12px;color:var(--muted)}
+
+  /* 設定畫面 */
+  #setup{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:rgba(4,12,9,.88);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+  #setup.hide{display:none}
+  .sbox{width:min(640px,92vw);max-height:94vh;overflow:auto;padding:28px;border-radius:26px;background:linear-gradient(180deg,#123526,#0b2118);box-shadow:0 0 0 2px rgba(242,200,107,.6),0 40px 100px rgba(0,0,0,.7)}
+  .sbox h2{font-size:30px;text-align:center;letter-spacing:.08em}
+  .sbox .lead{text-align:center;color:var(--muted);font-size:14px;margin:6px 0 18px;line-height:1.6}
+  .rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 14px}
+  .row{display:flex;align-items:center;gap:8px}
+  .row .r{width:3.4em;font-size:13px;color:var(--muted);flex:none}
+  .row .c{width:22px;height:22px;border-radius:50%;flex:none}
+  .row input{flex:1;min-width:0;width:100%;font-size:16px;padding:9px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--cream);outline:none}
+  .row input:focus{border-color:var(--gold)}
+  .row .perk{font-size:15px;width:1.4em;text-align:center}
+  .perks{margin:16px 0;padding:12px 16px;border-radius:14px;background:rgba(255,255,255,.05);font-size:14px;line-height:1.9;color:#efe2c6}
+  .sctrl{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+  .rules{font-size:13px;color:var(--muted);line-height:1.8;margin-top:14px}
+  .rules b{color:var(--cream)}
+
+  /* 結束 */
+  #fx{position:fixed;inset:0;pointer-events:none;z-index:60}
+</style>
+</head>
+<body>
+<canvas id="snow"></canvas>
+<canvas id="fx"></canvas>
+
+<div class="app">
+  <div class="boardWrap" id="boardWrap">
+    <div class="board" id="board">
+      <div class="center">
+        <h1 class="serif goldText">聖誕大富翁</h1>
+        <div class="sub">捌 參 咖 啡 聖 誕 歲 末 趴</div>
+        <div class="round" id="roundTxt"></div>
+        <div class="turnChip" id="turnChip"></div>
+        <div class="diceArea"><div class="die" id="die"></div></div>
+        <div class="piles"><div>🎁 天堂剩 <b id="hLeft">0</b></div><div>💀 地獄剩 <b id="dLeft">0</b></div></div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </div>
+  <aside class="side">
+    <div class="sideHead"><h2>玩家（擲骰順序）</h2><a class="ghost" href="./" style="text-decoration:none">🎱 回賓果</a></div>
+    <div class="players" id="players"></div>
+    <button class="ghost" id="swapUse">🔄 使用交換卡</button>
+    <button class="btn" id="rollBtn">擲骰子<span class="k">SPACE</span></button>
+    <div class="sideFoot">
+      <button class="ghost" id="soundBtn">🔊 音效</button>
+      <button class="ghost" id="fsBtn">⛶ 全螢幕</button>
+      <button class="ghost" id="setupBtn">⚙︎ 重新設定</button>
+    </div>
+  </aside>
+</div>
+
+<div id="modal"><div class="mbox" id="mbox"></div></div>
+
+<div id="setup">
+  <div class="sbox">
+    <h2 class="serif goldText">登記賓果名次</h2>
+    <div class="lead">照賓果完成的順序填入名字，這就是大富翁的擲骰順序。<br>沒完成賓果的人，照「已圈幾個」排在後面。</div>
+    <div class="rows" id="rows"></div>
+    <div class="perks">🥇 第 1 名：🛡️ 免死金牌（拒收一次地獄禮物）<br>🥈 第 2 名：🎲 再擲一次卡（不喜歡點數可以重擲）<br>🥉 第 3 名：🔄 交換卡（隨時跟任何人交換一份禮物）</div>
+    <div class="sctrl">
+      <div><button class="ghost" id="minusP">－ 少一人</button> <button class="ghost" id="plusP">＋ 多一人</button> <span id="pCount" style="color:var(--muted);font-size:14px;margin-left:6px"></span></div>
+      <button class="btn" id="startBtn">開始大富翁 🎲</button>
+    </div>
+    <div class="rules">
+      <b>規則</b>：天堂、地獄禮物各有 <span id="giftN">9</span> 份，每個人最後都會拿到一份天堂、一份地獄。<br>
+      🎁 天堂格：拿一份天堂禮物｜💀 地獄格：拿一份地獄禮物｜🎯 指定格：把地獄禮物塞給別人｜🔄 交換格：跟人交換禮物｜❓ 機會格：抽一張機會卡｜🎅 聖誕老人：休息一回合<br>
+      已經有那類禮物的人踩到天堂／地獄格時，改成<b>指定一位還沒拿到的人</b>收下。全部禮物發完，遊戲結束！
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const COLORS = ["#e63946","#f4a300","#2a9d8f","#3a86ff","#8338ec","#ff5d8f","#06a77d","#b5651d","#577590","#9c6644","#ef476f","#118ab2"];
+const PERKS = [{ shield: 1 }, { reroll: 1 }, { swap: 1 }];
+const TILE = {
+  start:  { ic: "🎄", nm: "聖誕起點" },
+  heaven: { ic: "🎁", nm: "天堂禮物" },
+  hell:   { ic: "💀", nm: "地獄禮物" },
+  give:   { ic: "🎯", nm: "指定地獄" },
+  swap:   { ic: "🔄", nm: "交換禮物" },
+  chance: { ic: "❓", nm: "機會" },
+  rest:   { ic: "🎅", nm: "休息一回" },
+};
+// 20 格，從左上角順時針
+const BOARD = ["start","heaven","chance","hell","swap","heaven",
+               "hell","give","heaven","chance",
+               "rest","hell","heaven","swap","hell",
+               "chance","heaven","give","hell"].concat(["chance"]);
+const PER = BOARD.length;
+function tileRC(i) {
+  if (i <= 5) return [0, i];
+  if (i <= 10) return [i - 5, 5];
+  if (i <= 15) return [5, 15 - i];
+  return [20 - i, 0];
+}
+
+/* ---------- 狀態 ---------- */
+const SKEY = "xb-mono-state", NKEY = "xb-mono-names";
+if (/[?&]reset\b/.test(location.search)) { try { localStorage.removeItem(SKEY); } catch (e) {} history.replaceState(null, "", location.pathname); }
+let S = null;
+try { S = JSON.parse(localStorage.getItem(SKEY) || "null"); } catch (e) {}
+const save = () => { try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
+let soundOn = true; try { soundOn = localStorage.getItem("xb-sound") !== "0"; } catch (e) {}
+let busy = false;
+
+/* ---------- 音效 ---------- */
+let ac = null, master = null;
+function audio() { if (!ac) { ac = new (window.AudioContext || window.webkitAudioContext)(); master = ac.createGain(); master.gain.value = .8; master.connect(ac.destination); } if (ac.state === "suspended") ac.resume(); return ac; }
+function tone(f, t, len, vol, type = "sine") {
+  const o = ac.createOscillator(), g = ac.createGain(); o.type = type; o.frequency.value = f;
+  g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + len);
+  o.connect(g); g.connect(master); o.start(t); o.stop(t + len + .02);
+}
+function noise(t, len, vol, freq) {
+  const b = ac.createBuffer(1, ac.sampleRate * len, ac.sampleRate), d = b.getChannelData(0);
+  for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / d.length);
+  const s = ac.createBufferSource(); s.buffer = b; const f = ac.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq; f.Q.value = 1.2;
+  const g = ac.createGain(); g.gain.value = vol; s.connect(f); f.connect(g); g.connect(master); s.start(t);
+}
+const sfx = {
+  roll() { if (!soundOn) return; audio(); const t = ac.currentTime; for (let i = 0; i < 14; i++) noise(t + i * .065 + Math.random() * .02, .05, .5 - i * .025, 1800 + Math.random() * 1500); },
+  step(k) { if (!soundOn) return; audio(); tone(520 + k * 60, ac.currentTime, .12, .15, "triangle"); },
+  heaven() { if (!soundOn) return; audio(); const t = ac.currentTime; [784, 988, 1175, 1568, 1976].forEach((f, i) => { tone(f, t + i * .08, 1.2, .16); tone(f * 2, t + i * .08, .5, .04); }); },
+  hell() { if (!soundOn) return; audio(); const t = ac.currentTime; [392, 370, 349, 262].forEach((f, i) => tone(f, t + i * .32, i === 3 ? 1.1 : .32, .22, "sawtooth")); },
+  pop() { if (!soundOn) return; audio(); const t = ac.currentTime; tone(660, t, .15, .18, "triangle"); tone(990, t + .08, .25, .14, "triangle"); },
+  swap() { if (!soundOn) return; audio(); const t = ac.currentTime; const o = ac.createOscillator(), g = ac.createGain(); o.type = "sine"; o.frequency.setValueAtTime(300, t); o.frequency.exponentialRampToValueAtTime(1400, t + .35); o.frequency.exponentialRampToValueAtTime(300, t + .7); g.gain.setValueAtTime(.18, t); g.gain.exponentialRampToValueAtTime(.0001, t + .75); o.connect(g); g.connect(master); o.start(t); o.stop(t + .8); },
+  win() { if (!soundOn) return; audio(); const t = ac.currentTime; [523, 659, 784, 1047, 784, 1047, 1319, 1568].forEach((f, i) => { tone(f, t + i * .14, .6, .2, "triangle"); tone(f / 2, t + i * .14, .4, .08); }); },
+};
+
+/* ---------- 棋盤 ---------- */
+const boardEl = $("#board"), wrap = $("#boardWrap");
+const tiles = [];
+BOARD.forEach((type, i) => {
+  const [r, c] = tileRC(i);
+  const t = document.createElement("div");
+  t.className = "tile " + type; t.style.gridRow = r + 1; t.style.gridColumn = c + 1;
+  t.innerHTML = `<span class="no">${i === 0 ? "" : i}</span><span class="ic">${TILE[type].ic}</span><span class="nm">${TILE[type].nm}</span>`;
+  boardEl.appendChild(t); tiles.push(t);
+});
+// 骰子
+const PIPS = { 1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8] };
+const die = $("#die");
+for (let f = 1; f <= 6; f++) {
+  const face = document.createElement("div"); face.className = "face f" + f;
+  for (let k = 0; k < 9; k++) { const c = document.createElement("div"); if (PIPS[f].includes(k)) c.className = "pip"; face.appendChild(c); }
+  die.appendChild(face);
+}
+const FACE_ROT = { 1: [0, 0], 6: [0, 180], 2: [0, -90], 5: [0, 90], 3: [-90, 0], 4: [90, 0] };
+let spins = 0;
+function showDie(v, animate) {
+  spins += animate ? 2 : 0;
+  const [x, y] = FACE_ROT[v];
+  die.style.transition = animate ? "" : "none";
+  die.style.transform = `rotateX(${x + spins * 360}deg) rotateY(${y + spins * 360}deg)`;
+}
+
+/* ---------- 棋子 ---------- */
+let tokens = [];
+function buildTokens() {
+  tokens.forEach(t => t.remove()); tokens = [];
+  S.players.forEach((p, i) => {
+    const t = document.createElement("div"); t.className = "token"; t.style.background = p.color; t.textContent = [...p.name][0] || (i + 1);
+    t.title = p.name; boardEl.appendChild(t); tokens.push(t);
+  });
+  placeTokens(false);
+}
+function placeTokens() {
+  const br = boardEl.getBoundingClientRect();
+  const ts = Math.max(18, tiles[0].getBoundingClientRect().width * .3);
+  boardEl.style.setProperty("--ts", ts + "px");
+  const groups = {};
+  S.players.forEach((p, i) => (groups[p.pos] = groups[p.pos] || []).push(i));
+  Object.entries(groups).forEach(([pos, ids]) => {
+    const r = tiles[pos].getBoundingClientRect();
+    const cx = r.left - br.left + r.width / 2, cy = r.top - br.top + r.height / 2;
+    const cols = ids.length <= 1 ? 1 : ids.length <= 4 ? 2 : 3;
+    const gap = Math.min(ts * .82, (r.width - ts) / Math.max(1, cols - 1));
+    const rows = Math.ceil(ids.length / cols);
+    ids.forEach((id, k) => {
+      const col = k % cols, row = Math.floor(k / cols);
+      const x = cx + (col - (cols - 1) / 2) * gap - ts / 2, y = cy + (row - (rows - 1) / 2) * gap * .8 - ts / 2;
+      tokens[id].style.transform = `translate(${x}px,${y}px)`;
+    });
+  });
+  tokens.forEach((t, i) => t.classList.toggle("active", i === S.turn && S.phase === "play"));
+}
+
+/* ---------- 側欄 ---------- */
+const itemIcons = p => "🛡️".repeat(p.items.shield || 0) + "🎲".repeat(p.items.reroll || 0) + "🔄".repeat(p.items.swap || 0);
+function renderSide() {
+  const box = $("#players"); box.innerHTML = "";
+  S.players.forEach((p, i) => {
+    const el = document.createElement("div"); el.className = "pl" + (i === S.turn && S.phase === "play" ? " active" : "");
+    el.innerHTML = `<div class="rk">#${i + 1}</div><div class="dot" style="background:${p.color}">${[...p.name][0] || ""}</div>
+      <div class="nm">${esc(p.name)}<small>${p.skip ? "🎅 下回合休息" : (p.heaven && p.hell ? "✅ 禮物到齊・搗蛋鬼" : "")}</small></div>
+      <div class="items">${itemIcons(p)}</div>
+      <div class="gifts"><span class="${p.heaven ? "got" : ""}">🎁</span><span class="${p.hell ? "got" : ""}">💀</span></div>`;
+    box.appendChild(el);
+  });
+  const p = S.players[S.turn];
+  $("#turnChip").innerHTML = S.phase === "end" ? "🎉 遊戲結束" : `<div class="dot" style="background:${p.color}">${[...p.name][0] || ""}</div>輪到 ${esc(p.name)}`;
+  $("#roundTxt").textContent = S.phase === "end" ? "" : `第 ${S.round} 輪`;
+  $("#hLeft").textContent = S.heavenLeft; $("#dLeft").textContent = S.hellLeft;
+  $("#log").innerHTML = S.log.slice(-3).reverse().map(l => `<div>${l}</div>`).join("");
+  $("#rollBtn").disabled = busy || S.phase !== "play";
+  $("#swapUse").style.display = S.phase === "play" && !busy && p.items.swap ? "block" : "none";
+  placeTokens();
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const nm = p => `<b style="color:${p.color};filter:brightness(1.4)">${esc(p.name)}</b>`;
+function log(html) { S.log.push(html); if (S.log.length > 40) S.log.shift(); }
+
+/* ---------- 事件視窗 ---------- */
+let modalKey = null;
+function modal({ icon, title, text, theme, buttons, hint }) {
+  return new Promise(res => {
+    const box = $("#mbox");
+    box.className = "mbox" + (theme ? " " + theme + "Box" : "");
+    box.innerHTML = `<div class="mi">${icon}</div><h3 class="goldText">${title}</h3><p>${text || ""}</p><div class="mbtns"></div>${hint ? `<div class="mhint">${hint}</div>` : ""}`;
+    const bb = box.querySelector(".mbtns");
+    const list = buttons || [{ label: "好", value: true, main: true }];
+    list.forEach(b => {
+      const el = document.createElement("button");
+      if (b.player) { el.className = "pick"; el.style.background = b.player.color; el.innerHTML = esc(b.player.name); }
+      else { el.className = b.main ? "btn" : "ghost"; el.textContent = b.label; }
+      el.onclick = () => { $("#modal").classList.remove("show"); modalKey = null; res(b.value); };
+      bb.appendChild(el);
+    });
+    const main = list.find(b => b.main);
+    modalKey = main ? () => { $("#modal").classList.remove("show"); modalKey = null; res(main.value); } : null;
+    $("#modal").classList.add("show");
+  });
+}
+const pickPlayer = (title, text, cands, icon = "👉", theme) =>
+  modal({ icon, title, text, theme, buttons: cands.map(p => ({ player: p, value: p })).concat([{ label: "🎲 隨機", value: "rand" }]) })
+    .then(v => v === "rand" ? cands[Math.floor(Math.random() * cands.length)] : v);
+
+/* ---------- 禮物 ---------- */
+async function giveHeaven(p, reason) {
+  if (S.heavenLeft <= 0) { await modal({ icon: "🎁", title: "天堂禮物發完了", text: "沒有天堂禮物可以拿了，什麼事都沒發生。" }); return; }
+  if (!p.heaven) {
+    p.heaven = 1; S.heavenLeft--; sfx.heaven(); fireworks(30); log(`${nm(p)} 拿到天堂禮物 🎁`); renderSide();
+    await modal({ icon: "🎁", title: "天堂禮物！", theme: "heaven", text: `${nm(p)} ${reason || ""}<br>去天堂禮物堆<b>挑一份</b>吧！`, buttons: [{ label: "挑好了", value: 1, main: true }] });
+    return;
+  }
+  const cands = S.players.filter(q => !q.heaven);
+  if (!cands.length) return;
+  const q = await pickPlayer("分享好運", `${nm(p)} 已經有天堂禮物了，<br>指定一位還沒拿到的人收下天堂禮物！`, cands, "🎁", "heaven");
+  await giveHeaven(q, `收到 ${esc(p.name)} 分享的好運`);
+}
+async function giveHell(p, reason, from) {
+  if (S.hellLeft <= 0) { await modal({ icon: "💀", title: "地獄禮物發完了", text: "沒有地獄禮物了，逃過一劫！" }); return; }
+  if (!p.hell) {
+    if (p.items.shield) {
+      const use = await modal({ icon: "🛡️", title: "要用免死金牌嗎？", theme: "hell", text: `${nm(p)} 要收地獄禮物了…<br>使用免死金牌就能轉給別人！`,
+        buttons: [{ label: "🛡️ 使用！", value: true, main: true }, { label: "不用，我收下", value: false }] });
+      if (use) {
+        const cands = S.players.filter(q => !q.hell && q !== p);
+        p.items.shield--; renderSide();
+        if (cands.length) {
+          const q = await pickPlayer("轉嫁地獄", `${nm(p)} 亮出免死金牌！<br>要把地獄禮物塞給誰？`, cands, "😈", "hell");
+          log(`${nm(p)} 用免死金牌，把地獄轉給 ${nm(q)}`);
+          return giveHell(q, `被 ${esc(p.name)} 的免死金牌轉嫁`);
+        }
+      }
+    }
+    p.hell = 1; S.hellLeft--; sfx.hell(); log(`${nm(p)} 收到地獄禮物 💀`); renderSide();
+    await modal({ icon: "💀", title: "地獄禮物！", theme: "hell", text: `${nm(p)} ${reason || ""}<br>去地獄禮物堆<b>抽一份</b>，節哀 🙏`, buttons: [{ label: "抽好了", value: 1, main: true }] });
+    return;
+  }
+  const cands = S.players.filter(q => !q.hell && q !== p);
+  if (!cands.length) return;
+  const q = await pickPlayer("地獄轉嫁", `${nm(p)} 已經有地獄禮物了，<br>指定一位還沒拿到的人收下地獄禮物！`, cands, "😈", "hell");
+  await giveHell(q, `被 ${esc(p.name)} 指定`);
+}
+async function doSwap(p) {
+  const others = S.players.filter(q => q !== p);
+  const q = await pickPlayer("交換禮物", `${nm(p)} 要跟誰交換一份禮物？`, others, "🔄");
+  sfx.swap(); log(`${nm(p)} 和 ${nm(q)} 交換禮物 🔄`);
+  const both = [p.heaven && q.heaven ? "天堂" : null, p.hell && q.hell ? "地獄" : null].filter(Boolean);
+  await modal({ icon: "🔄", title: "交換！", text: both.length
+      ? `${nm(p)} 和 ${nm(q)}<br>交換手上的一份<b>${both.join("或")}</b>禮物（${nm(p)} 決定換哪一份）`
+      : `${nm(p)} 和 ${nm(q)} 目前沒有同類型的禮物可以換…<br>那就互相說一句聖誕祝福吧 🎄`,
+    buttons: [{ label: "換好了", value: 1, main: true }] });
+}
+
+/* ---------- 機會卡 ---------- */
+const CHANCE = [
+  { w: 3, icon: "🎅", title: "聖誕老人的祝福", text: "直接獲得天堂禮物！", run: p => giveHeaven(p, "被聖誕老人祝福") },
+  { w: 3, icon: "🦌", title: "被麋鹿踩到", text: "直接收下地獄禮物…", run: p => giveHell(p, "被麋鹿踩到") },
+  { w: 2, icon: "🛷", title: "雪橇加速", text: "前進到下一個天堂格！", run: async (p, d) => { await moveTo(p, nextOf(p.pos, "heaven")); await landOn(p, d + 1); } },
+  { w: 2, icon: "❄️", title: "滑倒了", text: "後退 3 格", run: async (p, d) => { await walk(p, -3); await landOn(p, d + 1); } },
+  { w: 2, icon: "🎲", title: "再擲一次", text: "好運氣，再擲一次骰子！", run: async p => { extraTurn = true; } },
+  { w: 1, icon: "🛡️", title: "撿到免死金牌", text: "獲得一張免死金牌！", run: async p => { p.items.shield = (p.items.shield || 0) + 1; log(`${nm(p)} 獲得免死金牌 🛡️`); } },
+  { w: 1, icon: "🔄", title: "撿到交換卡", text: "獲得一張交換卡！", run: async p => { p.items.swap = (p.items.swap || 0) + 1; log(`${nm(p)} 獲得交換卡 🔄`); } },
+  { w: 2, icon: "😴", title: "睡魔來了", text: "選一個人，下回合休息！", run: async p => { const q = await pickPlayer("誰要休息？", "選一個人下回合休息 😴", S.players.filter(x => x !== p), "😴"); q.skip = true; log(`${nm(p)} 讓 ${nm(q)} 休息一回合 😴`); } },
+  { w: 2, icon: "⬅️", title: "禮物大風吹", text: "所有拿到禮物的人，把手上<b>天堂禮物往左傳</b>一位！", physical: true },
+  { w: 1, icon: "🤝", title: "交換時間", text: "可以跟任何人交換一份禮物", run: p => doSwap(p) },
+  { w: 1, icon: "🎤", title: "才藝時間", text: "表演一段才藝（唱歌、模仿都行），大家鼓掌就過關！", physical: true },
+  { w: 1, icon: "☕", title: "捌參咖啡請客", text: "說出你今年最感謝的一個人，再擲一次！", run: async () => { extraTurn = true; } },
+];
+function drawChance() { const tot = CHANCE.reduce((a, c) => a + c.w, 0); let r = Math.random() * tot; for (const c of CHANCE) { r -= c.w; if (r < 0) return c; } return CHANCE[0]; }
+const nextOf = (pos, type) => { for (let k = 1; k <= PER; k++) if (BOARD[(pos + k) % PER] === type) return (pos + k) % PER; return pos; };
+
+/* ---------- 移動 ---------- */
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+async function walk(p, n) {
+  const id = S.players.indexOf(p), dir = n > 0 ? 1 : -1;
+  for (let k = 0; k < Math.abs(n); k++) {
+    p.pos = (p.pos + dir + PER) % PER;
+    sfx.step(k); placeTokens();
+    const t = tokens[id]; t.classList.remove("hop"); void t.offsetWidth; t.classList.add("hop");
+    await sleep(260);
+  }
+}
+async function moveTo(p, target) { const n = (target - p.pos + PER) % PER; await walk(p, n); }
+
+/* ---------- 踩到格子 ---------- */
+let extraTurn = false;
+async function landOn(p, depth = 0) {
+  const type = BOARD[p.pos];
+  tiles[p.pos].classList.remove("flash"); void tiles[p.pos].offsetWidth; tiles[p.pos].classList.add("flash");
+  await sleep(350);
+  if (type === "heaven") await giveHeaven(p, "踩到天堂格");
+  else if (type === "hell") await giveHell(p, "踩到地獄格");
+  else if (type === "give") {
+    const cands = S.players.filter(q => !q.hell && q !== p);
+    if (S.hellLeft > 0 && cands.length) {
+      sfx.pop();
+      const q = await pickPlayer("指定地獄", `${nm(p)} 可以把一份地獄禮物<br>塞給一位還沒拿到的人！`, cands, "🎯", "hell");
+      await giveHell(q, `被 ${esc(p.name)} 指定`);
+    } else await modal({ icon: "🎯", title: "指定地獄", text: "沒有人可以指定了，平安無事！" });
+  }
+  else if (type === "swap") { sfx.pop(); await doSwap(p); }
+  else if (type === "rest") { sfx.pop(); p.skip = true; log(`${nm(p)} 被聖誕老人留下來喝熱可可 🎅`); await modal({ icon: "🎅", title: "休息一回合", text: `${nm(p)} 被聖誕老人留下來喝熱可可，<br>下一回合暫停！` }); }
+  else if (type === "chance") {
+    sfx.pop();
+    const c = drawChance();
+    await modal({ icon: c.icon, title: c.title, text: `${nm(p)}：${c.text}`, buttons: [{ label: c.physical ? "完成了" : "好！", value: 1, main: true }] });
+    if (!c.physical) log(`${nm(p)} 抽到機會：${c.title}`); else log(`${nm(p)} 抽到「${c.title}」`);
+    if (c.run && depth < 2) await c.run(p, depth);
+  }
+  else if (type === "start") { sfx.pop(); log(`${nm(p)} 回到聖誕起點 🎄`); }
+  renderSide(); save();
+}
+
+/* ---------- 回合 ---------- */
+function roll1() { return 1 + Math.floor(Math.random() * 6); }
+async function rollDice() {
+  sfx.roll(); const v = roll1(); showDie(v, true); await sleep(1050); return v;
+}
+async function takeTurn() {
+  if (busy || S.phase !== "play") return;
+  busy = true; audio(); renderSide();
+  const p = S.players[S.turn];
+  if (p.skip) {
+    p.skip = false; log(`${nm(p)} 休息中 🎅`);
+    await modal({ icon: "🎅", title: "休息中", text: `${nm(p)} 還在喝熱可可，這回合跳過！` });
+  } else {
+    let v = await rollDice();
+    if (p.items.reroll) {
+      const re = await modal({ icon: "🎲", title: `擲出 ${v} 點`, text: `${nm(p)} 有「再擲一次」卡，要重擲嗎？<br>（會走到第 ${(p.pos + v) % PER === 0 ? "起點" : (p.pos + v) % PER} 格：${TILE[BOARD[(p.pos + v) % PER]].nm}）`,
+        buttons: [{ label: "就走這個", value: false, main: true }, { label: "🎲 重擲！", value: true }] });
+      if (re) { p.items.reroll--; renderSide(); v = await rollDice(); log(`${nm(p)} 用了再擲一次 🎲`); }
+    }
+    log(`${nm(p)} 擲出 ${v} 點`);
+    renderSide();
+    await walk(p, v);
+    extraTurn = false;
+    await landOn(p);
+    while (extraTurn && S.phase === "play" && !checkEnd()) {
+      extraTurn = false;
+      await modal({ icon: "🎲", title: "再擲一次", text: `${nm(p)} 再擲一次骰子！`, buttons: [{ label: "擲！", value: 1, main: true }] });
+      const v2 = await rollDice(); log(`${nm(p)} 再擲出 ${v2} 點`); renderSide();
+      await walk(p, v2); await landOn(p);
+    }
+  }
+  if (checkEnd()) { await finish(); busy = false; renderSide(); return; }
+  S.turn = (S.turn + 1) % S.players.length;
+  if (S.turn === 0) S.round++;
+  busy = false; save(); renderSide();
+}
+const checkEnd = () => S.players.every(p => p.heaven && p.hell);
+async function finish() {
+  S.phase = "end"; save(); sfx.win(); fireworks(220);
+  renderSide();
+  await modal({ icon: "🎄", title: "禮物全部發完！", text: `每個人都拿到天堂和地獄禮物了 🎉<br>一共玩了 <b>${S.round}</b> 輪。<br>捌參咖啡祝大家聖誕快樂、新年快樂！`, buttons: [{ label: "🎉 聖誕快樂", value: 1, main: true }] });
+}
+async function useSwapCard() {
+  if (busy || S.phase !== "play") return;
+  const p = S.players[S.turn]; if (!p.items.swap) return;
+  busy = true; renderSide(); p.items.swap--; log(`${nm(p)} 使用交換卡 🔄`);
+  await doSwap(p); busy = false; save(); renderSide();
+}
+
+/* ---------- 設定畫面 ---------- */
+let names = [];
+try { names = JSON.parse(localStorage.getItem(NKEY) || "[]"); } catch (e) {}
+let pCount = Math.max(2, Math.min(12, names.length || 9));
+function renderRows() {
+  const rows = $("#rows"); const cur = [...rows.querySelectorAll("input")].map(i => i.value);
+  if (cur.length) names = cur;
+  rows.innerHTML = "";
+  for (let i = 0; i < pCount; i++) {
+    const r = document.createElement("div"); r.className = "row";
+    r.innerHTML = `<span class="r">第 ${i + 1} 名</span><span class="c" style="background:${COLORS[i]}"></span><input maxlength="10" placeholder="名字" value="${esc(names[i] || "")}"><span class="perk">${["🛡️", "🎲", "🔄"][i] || ""}</span>`;
+    rows.appendChild(r);
+  }
+  // 「直欄」排序：左邊 1–5 名，右邊 6 名以後
+  rows.style.gridAutoFlow = "column"; rows.style.gridTemplateRows = `repeat(${Math.ceil(pCount / 2)}, auto)`;
+  $("#pCount").textContent = `${pCount} 人`; $("#giftN").textContent = pCount;
+}
+$("#plusP").onclick = () => { if (pCount < 12) { pCount++; renderRows(); } };
+$("#minusP").onclick = () => { if (pCount > 2) { pCount--; renderRows(); } };
+$("#rows").addEventListener("keydown", e => { if (e.key === "Enter") { const ins = [...$("#rows").querySelectorAll("input")]; const i = ins.indexOf(e.target); if (ins[i + 1]) ins[i + 1].focus(); else $("#startBtn").click(); } });
+$("#startBtn").onclick = () => {
+  const ins = [...$("#rows").querySelectorAll("input")];
+  const ns = ins.map((i, k) => i.value.trim() || `玩家${k + 1}`);
+  try { localStorage.setItem(NKEY, JSON.stringify(ns)); } catch (e) {}
+  S = { phase: "play", turn: 0, round: 1, heavenLeft: ns.length, hellLeft: ns.length, log: [],
+        players: ns.map((n, i) => ({ name: n, color: COLORS[i], pos: 0, heaven: 0, hell: 0, skip: false, items: Object.assign({ shield: 0, reroll: 0, swap: 0 }, PERKS[i] || {}) })) };
+  log("🎄 遊戲開始！照賓果名次輪流擲骰子");
+  save(); $("#setup").classList.add("hide"); buildTokens(); showDie(1, false); renderSide(); audio();
+};
+let armT = null;
+$("#setupBtn").onclick = e => {
+  const b = e.currentTarget;
+  if (S && S.phase === "play" && !b.dataset.armed) { b.dataset.armed = 1; b.textContent = "再按一次：整局重來"; clearTimeout(armT); armT = setTimeout(() => { delete b.dataset.armed; b.textContent = "⚙︎ 重新設定"; }, 3000); return; }
+  delete b.dataset.armed; b.textContent = "⚙︎ 重新設定";
+  if (S) names = S.players.map(p => p.name), pCount = S.players.length;
+  $("#rows").innerHTML = ""; renderRows(); $("#setup").classList.remove("hide");
+};
+
+/* ---------- 按鍵 ---------- */
+$("#rollBtn").onclick = takeTurn;
+$("#swapUse").onclick = useSwapCard;
+addEventListener("keydown", e => {
+  if (e.target.tagName === "INPUT") return;
+  if (e.code === "Space" || e.code === "Enter") {
+    e.preventDefault(); if (e.repeat) return;
+    if ($("#modal").classList.contains("show")) { if (modalKey) modalKey(); }
+    else if (!$("#setup").classList.contains("hide")) return;
+    else takeTurn();
+  }
+});
+$("#soundBtn").onclick = () => { soundOn = !soundOn; try { localStorage.setItem("xb-sound", soundOn ? "1" : "0"); } catch (e) {} $("#soundBtn").textContent = soundOn ? "🔊 音效" : "🔇 音效"; };
+$("#soundBtn").textContent = soundOn ? "🔊 音效" : "🔇 音效";
+$("#fsBtn").onclick = () => { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); };
+addEventListener("resize", () => { if (S) placeTokens(); });
+
+/* ---------- 煙火 / 飄雪 ---------- */
+const fx = $("#fx"), fctx = fx.getContext("2d"); let parts = [], fxOn = false;
+function fireworks(n) {
+  fx.width = innerWidth; fx.height = innerHeight;
+  const cols = ["#f2c86b", "#ff5a6a", "#4fd18b", "#ffffff", "#4fa3ff", "#ffd54a"];
+  const bursts = Math.max(1, Math.round(n / 30));
+  for (let b = 0; b < bursts; b++) {
+    const x = innerWidth * (.2 + Math.random() * .6), y = innerHeight * (.2 + Math.random() * .35), delay = b * 12;
+    for (let i = 0; i < 30; i++) { const a = Math.random() * Math.PI * 2, s = 2 + Math.random() * 5; parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 70 + Math.random() * 30, delay, c: cols[(i + b) % cols.length] }); }
+  }
+  if (!fxOn) { fxOn = true; requestAnimationFrame(fxLoop); }
+}
+function fxLoop() {
+  fctx.clearRect(0, 0, fx.width, fx.height);
+  parts = parts.filter(p => p.life > 0);
+  parts.forEach(p => { if (p.delay > 0) { p.delay--; return; } p.vy += .06; p.vx *= .985; p.x += p.vx; p.y += p.vy; p.life--;
+    fctx.globalAlpha = Math.min(1, p.life / 40); fctx.fillStyle = p.c; fctx.beginPath(); fctx.arc(p.x, p.y, 2.6, 0, Math.PI * 2); fctx.fill(); });
+  fctx.globalAlpha = 1;
+  if (parts.length) requestAnimationFrame(fxLoop); else { fxOn = false; fctx.clearRect(0, 0, fx.width, fx.height); }
+}
+(function snow() {
+  const cv = $("#snow"), ctx = cv.getContext("2d");
+  const fl = Array.from({ length: 80 }, () => ({ x: Math.random(), y: Math.random(), r: .6 + Math.random() * 2, s: .0005 + Math.random() * .001, w: Math.random() * 6 }));
+  (function f(t) { cv.width = innerWidth; cv.height = innerHeight; ctx.fillStyle = "rgba(255,255,255,.5)";
+    fl.forEach(p => { p.y += p.s; if (p.y > 1.02) { p.y = -.02; p.x = Math.random(); } ctx.beginPath(); ctx.arc((p.x + Math.sin(t / 2000 + p.w) * .01) * cv.width, p.y * cv.height, p.r, 0, Math.PI * 2); ctx.fill(); });
+    requestAnimationFrame(f); })(0);
+})();
+
+/* ---------- 啟動 ---------- */
+if (S && S.players && S.phase) { $("#setup").classList.add("hide"); buildTokens(); showDie(1, false); renderSide(); }
+else renderRows();
+window.__mono = { get S() { return S; } }; // 測試用
+})();
+</script>
+</body>
+</html>
