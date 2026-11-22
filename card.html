@@ -42,8 +42,7 @@
   .grid{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
   .c{position:relative;aspect-ratio:1;border-radius:12px;background:var(--cream);color:#2a1a10;display:flex;align-items:center;justify-content:center;
     font-weight:800;font-size:clamp(20px,7vw,30px);font-family:"Avenir Next","Helvetica Neue",sans-serif;cursor:pointer;
-    box-shadow:inset 0 -3px 0 rgba(0,0,0,.12);transition:transform .1s}
-  .c:active{transform:scale(.93)}
+    box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
   .c::before{content:"";position:absolute;inset:10%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff7a88,var(--red) 60%,#8a1524);
     transform:scale(0);opacity:.92;transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
   .c span{position:relative;z-index:1;transition:color .2s}
@@ -64,16 +63,12 @@
   @keyframes hit{0%{transform:scale(.86) translateY(2px)}60%{transform:scale(1.06)}100%{transform:scale(1)}}
   .c.stamp::before{animation:stampIn .42s cubic-bezier(.2,1.4,.4,1) both}
   @keyframes stampIn{0%{transform:scale(2.4) rotate(-35deg);opacity:0}55%{transform:scale(.86) rotate(4deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:.92}}
-  .c.stamp span{animation:numPop .42s ease-out}
-  @keyframes numPop{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
-  .c.unstamp{animation:unhit .3s ease-out}
-  @keyframes unhit{0%{transform:rotate(0)}25%{transform:rotate(-6deg)}50%{transform:rotate(5deg)}75%{transform:rotate(-3deg)}100%{transform:rotate(0)}}
   .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.7);pointer-events:none;transform:translate(-50%,-50%) scale(0);
     animation:ripple .55s ease-out forwards;z-index:2}
   @keyframes ripple{to{transform:translate(-50%,-50%) scale(1);opacity:0}}
   .ink{position:fixed;width:7px;height:7px;border-radius:50%;background:var(--red);pointer-events:none;z-index:40}
   .c.wave{animation:wave .7s cubic-bezier(.3,1.5,.5,1) both}
-  @keyframes wave{0%{transform:scale(1)}40%{transform:scale(1.16) translateY(-6px);box-shadow:0 0 22px 6px rgba(255,220,130,.9)}100%{transform:scale(1)}}
+  @keyframes wave{0%,100%{box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}40%{box-shadow:0 0 0 3px #ffe39a,0 0 22px 6px rgba(255,220,130,.9)}}
   .card.shake{animation:shake .45s ease-in-out}
   @keyframes shake{0%,100%{transform:none}20%{transform:translateX(-6px) rotate(-1deg)}40%{transform:translateX(5px) rotate(1deg)}60%{transform:translateX(-4px)}80%{transform:translateX(2px)}}
   .spark{position:fixed;pointer-events:none;z-index:41;font-size:16px;line-height:1}
@@ -114,7 +109,7 @@
 <body>
 <canvas id="confetti"></canvas>
 <canvas id="snow"></canvas>
-<label id="hapticLbl" style="position:fixed;left:-9999px;top:0;opacity:0"><input type="checkbox" switch id="hapticSw"></label>
+<label id="hapticLbl" style="position:fixed;left:-9999px;top:0;opacity:0"><input type="checkbox" switch id="hapticSw" tabindex="-1" aria-hidden="true"></label>
 <div class="wrap">
   <h1>CHRISTMAS BINGO</h1>
   <div class="sub">捌 參 咖 啡 聖 誕 歲 末 趴</div>
@@ -191,7 +186,7 @@ const sWin = () => { try { audio(); const t = ac.currentTime;
 /* 震動：Android 用 Vibration API；iPhone（iOS 18+ Safari）用隱藏開關觸發系統觸覺回饋 */
 const canVibrate = typeof navigator.vibrate === "function";
 const hapticLbl = $("#hapticLbl");
-function tick() { try { hapticLbl.click(); } catch (e) {} }
+function tick() { try { hapticLbl.click(); document.activeElement && document.activeElement.id === "hapticSw" && document.activeElement.blur(); } catch (e) {} }
 const buzz = p => {
   try {
     if (canVibrate) { navigator.vibrate(p); return; }
@@ -241,7 +236,6 @@ function celebrateLine(line) {
     const c = cells[idx];
     setTimeout(() => { replay(c, "wave"); sparkAt(c); }, k * 90);
   });
-  replay($(".card"), "shake");
   const card = $(".card"); card.classList.add("party"); setTimeout(() => card.classList.remove("party"), 1600);
 }
 function sparkAt(c) {
@@ -317,8 +311,8 @@ function toggle(i) {
   st.marked[i] = !st.marked[i];
   const c = cells[i], on = st.marked[i];
   sTap(on);
-  if (on) { replay(c, "hit"); replay(c, "stamp"); inkSplash(c); buzz(18); }
-  else { c.classList.remove("stamp"); replay(c, "unstamp"); buzz([8, 60, 8]); }
+  if (on) { replay(c, "stamp"); inkSplash(c); buzz(18); }
+  else { c.classList.remove("stamp"); buzz([8, 60, 8]); }
   const { n, newLine, newLines } = render(true);
   newLines.forEach((l, k) => setTimeout(() => celebrateLine(l), 250 + k * 300));
   if (!st.winAt && n >= 2) {
